@@ -29,13 +29,12 @@ static GBitmap *s_bitmap_action_exit;
 static int poolSize = 25;
 static int lapCount = 0;
 static int timeCount = 0;
-
 static int numberOfWorkouts = 0;
 
 static char workout_date[100][16];
 static int workout_distance[100];
 static int workout_time[100];
-static char s_body_text[100][25];
+static char menu_history_subtext[100][25];
 
 /********************************
  *********** MENU ***************
@@ -123,8 +122,7 @@ static void menu_select_callback(int index, void *ctx) {
        poolSize = 25;
      break;
    }
-  //window_stack_pop(s_choices_window);
-  window_stack_push(s_workout_window, true);
+   window_stack_push(s_workout_window, true);
 }
 
 static void click_config_provider_save(void *context) {
@@ -181,13 +179,11 @@ static void window_load(Window *window) {
   // Initialize the action bar:
   action_bar = action_bar_layer_create();
   //action_bar_layer_set_background_color(action_bar, GColorWhite);
-    
   // Associate the action bar with the window:
   action_bar_layer_add_to_window(action_bar, window);
   // Set the click config provider:
   action_bar_layer_set_click_config_provider(action_bar,
                                              click_config_provider);
-  
   // logo
   s_bitmap_main_logo = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_LOGO);
   s_bitmap_main_logo_layer = bitmap_layer_create(GRect(6, 20, 100, 140));
@@ -207,7 +203,6 @@ static void window_load(Window *window) {
   s_bitmap_action_history = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HISTORY);
   action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_UP, s_bitmap_action_history, true);
   s_bitmap_action_information = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_INFORMATION);
-  //action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_DOWN, s_bitmap_action_information, true);
   
 }
 
@@ -221,6 +216,7 @@ static void workout_window_load(Window *window) {
   lapCount = 0;
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
+  
   text_layer_lapCounter = text_layer_create(GRect(0, 58, bounds.size.w, 60));  
   text_layer_set_text(text_layer_lapCounter, "0");
   text_layer_set_font(text_layer_lapCounter, fonts_get_system_font(FONT_KEY_BITHAM_42_BOLD));
@@ -231,8 +227,6 @@ static void workout_window_load(Window *window) {
   text_layer_set_text(text_layer_timeCounter, " 00:00:00");
   text_layer_set_font(text_layer_timeCounter, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_text_alignment(text_layer_timeCounter, GTextAlignmentCenter);
-  //text_layer_set_background_color(text_layer_timeCounter, GColorBlack);
-  //text_layer_set_text_color(text_layer_timeCounter, GColorWhite);
   layer_add_child(window_layer, text_layer_get_layer(text_layer_timeCounter));
   
   text_layer_distance = text_layer_create(GRect(0, 30, bounds.size.w, 30));  
@@ -255,8 +249,6 @@ static void workout_window_load(Window *window) {
   text_layer_set_text(text_layer_pace, " 0 sec/100m");
   text_layer_set_font(text_layer_pace, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(text_layer_pace, GTextAlignmentLeft);
-  //text_layer_set_background_color(text_layer_pace, GColorBlack);
-  //text_layer_set_text_color(text_layer_pace, GColorWhite);
   layer_add_child(window_layer, text_layer_get_layer(text_layer_pace));
   
   window_set_click_config_provider(s_workout_window, click_config_provider_workout);
@@ -268,10 +260,7 @@ static void workout_window_unload(Window *window) {
 }
 
 static void choices_window_load(Window *window) {
-  // Although we already defined NUM_FIRST_MENU_ITEMS, you can define
-  // an int as such to easily change the order of menu items later
   int num_a_items = 0;
-
   s_first_menu_items[num_a_items++] = (SimpleMenuItem) {
     .title = "25m",
     .callback = menu_select_callback,
@@ -288,9 +277,7 @@ static void choices_window_load(Window *window) {
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
-
   s_simple_menu_layer = simple_menu_layer_create(bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
-
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
    
 }
@@ -326,11 +313,7 @@ static void save_window_unload(Window *window) {
 }
 
 static void history_window_load(Window *window) {
- 
-  // Although we already defined NUM_FIRST_MENU_ITEMS, you can define
-  // an int as such to easily change the order of menu items later
   for (int i=0; i < numberOfWorkouts && i < NUM_HISTORY_FIRST_MENU_ITEMS; i++) {
-     
       persist_read_string(3 * i, workout_date[i], 16);
       workout_distance[i] = persist_read_int(3 * i + 1);
       workout_time[i] = persist_read_int(3 * i + 2);
@@ -339,12 +322,12 @@ static void history_window_load(Window *window) {
          tempPace = (int)((timeCount / ((float)workout_distance[i])) * 100.0);
       }*/
     
-      snprintf(s_body_text[i], sizeof(s_body_text[i]), "%d m   %.2d:%.2d:%.2d", workout_distance[i],
+      snprintf(menu_history_subtext[i], sizeof(menu_history_subtext[i]), "%d m   %.2d:%.2d:%.2d", workout_distance[i],
                workout_time[i]/3600, workout_time[i]/60, workout_time[i]%60);
     
       s_history_first_menu_items[(numberOfWorkouts-1) - i] = (SimpleMenuItem) {
       .title = workout_date[i],
-      .subtitle = s_body_text[i],
+      .subtitle = menu_history_subtext[i],
     };
   }
 
