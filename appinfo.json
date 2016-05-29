@@ -1,0 +1,69 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "michaelheller007@googlemail.co",
+    "enableMultiJS": true,
+    "longName": "SwimBuddy",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/logo_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_LOGO_ICON",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/exit.png",
+                "name": "IMAGE_DELETE",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/save.png",
+                "name": "IMAGE_SAVE",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/information.png",
+                "name": "IMAGE_INFORMATION",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/history.png",
+                "name": "IMAGE_HISTORY",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/workout.png",
+                "name": "IMAGE_WORKOUT",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/logo.png",
+                "name": "IMAGE_LOGO",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "SwimBuddy",
+    "targetPlatforms": [
+        "aplite",
+        "basalt",
+        "chalk"
+    ],
+    "uuid": "4cd12da9-8dde-4f6f-bd86-edcbdd8529c9",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
