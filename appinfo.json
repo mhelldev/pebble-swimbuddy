@@ -10,6 +10,18 @@
     "resources": {
         "media": [
             {
+                "file": "images/down.png",
+                "name": "IMAGE_DOWN",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
+                "file": "images/up.png",
+                "name": "IMAGE_UP",
+                "targetPlatforms": null,
+                "type": "bitmap"
+            },
+            {
                 "file": "images/logo_icon.png",
                 "menuIcon": true,
                 "name": "IMAGE_LOGO_ICON",
@@ -58,8 +70,7 @@
     "shortName": "SwimBuddy",
     "targetPlatforms": [
         "aplite",
-        "basalt",
-        "chalk"
+        "basalt"
     ],
     "uuid": "4cd12da9-8dde-4f6f-bd86-edcbdd8529c9",
     "versionLabel": "1.0",

@@ -5,9 +5,11 @@ static Window *s_choices_window;
 static Window *s_workout_window;
 static Window *s_history_window;
 static Window *s_save_window;
+static Window *s_customsize_window;
 
 ActionBarLayer *action_bar;
 ActionBarLayer *action_bar_save;
+ActionBarLayer *action_bar_customsize;
 
 static TextLayer *text_layer;
 static TextLayer *text_layer_title;
@@ -17,6 +19,7 @@ static TextLayer *text_layer_distance;
 static TextLayer *text_layer_pace;
 static TextLayer *text_layer_speed;
 static TextLayer *text_layer_save;
+static TextLayer *text_layer_custommsize;
 
 static GBitmap *s_bitmap_main_logo;
 static BitmapLayer *s_bitmap_main_logo_layer;
@@ -25,11 +28,14 @@ static GBitmap *s_bitmap_action_history;
 static GBitmap *s_bitmap_action_information;
 static GBitmap *s_bitmap_action_savenexit;
 static GBitmap *s_bitmap_action_exit;
+static GBitmap *s_bitmap_action_customsize_up;
+static GBitmap *s_bitmap_action_customsize_down;
 
 static int poolSize = 25;
 static int lapCount = 0;
 static int timeCount = 0;
 static int numberOfWorkouts = 0;
+static int customPoolSize = 0;
 
 static char workout_date[100][16];
 static int workout_distance[100];
@@ -40,7 +46,7 @@ static char menu_history_subtext[100][25];
  *********** MENU ***************
  ********************************/
 #define NUM_MENU_SECTIONS 1
-#define NUM_FIRST_MENU_ITEMS 2
+#define NUM_FIRST_MENU_ITEMS 3
 static SimpleMenuLayer *s_simple_menu_layer;
 static SimpleMenuSection s_menu_sections[NUM_MENU_SECTIONS];
 static SimpleMenuItem s_first_menu_items[NUM_FIRST_MENU_ITEMS];
@@ -110,6 +116,31 @@ static void down_click_handler_save(ClickRecognizerRef recognizer, void *context
     window_stack_pop(s_choices_window);
 }
 
+static void refreshCustomPoolSize() {
+    persist_write_int(99999, customPoolSize);
+    static char s_body_text[26];
+    snprintf(s_body_text, sizeof(s_body_text), "%d m", customPoolSize);  
+    text_layer_set_text(text_layer_custommsize, s_body_text);
+}
+
+static void click_handler_customsize_up(ClickRecognizerRef recognizer, void *context) {
+    customPoolSize++;
+    refreshCustomPoolSize();
+}
+
+static void click_handler_customsize_down(ClickRecognizerRef recognizer, void *context) {
+    customPoolSize--;
+    refreshCustomPoolSize();
+}
+
+static void click_handler_customsize_select(ClickRecognizerRef recognizer, void *context) {
+    poolSize = customPoolSize;
+    window_stack_pop(s_customsize_window);
+    window_stack_push(s_workout_window, true);
+}
+
+
+
 static void menu_select_callback(int index, void *ctx) {
    switch(index) {
      case 0:
@@ -118,6 +149,9 @@ static void menu_select_callback(int index, void *ctx) {
      case 1:
        poolSize = 50;
      break;
+     case 2:
+       window_stack_push(s_customsize_window, true);
+       return;
      default:
        poolSize = 25;
      break;
@@ -140,6 +174,12 @@ static void click_config_provider_workout(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, any_click_handler_workout);
   window_single_click_subscribe(BUTTON_ID_DOWN, any_click_handler_workout);
   window_single_click_subscribe(BUTTON_ID_BACK, exit_click_handler_workout);
+}
+
+static void click_config_provider_customsize(void *context) {
+  window_single_click_subscribe(BUTTON_ID_UP, click_handler_customsize_up);
+  window_single_click_subscribe(BUTTON_ID_DOWN, click_handler_customsize_down);
+  window_single_click_subscribe(BUTTON_ID_SELECT, click_handler_customsize_select);
 }
 /********************************
  *********** ACTIONS END ********
@@ -203,6 +243,13 @@ static void window_load(Window *window) {
   s_bitmap_action_history = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HISTORY);
   action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_UP, s_bitmap_action_history, true);
   s_bitmap_action_information = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_INFORMATION);
+  
+  #ifdef PBL_COLOR
+    window_set_background_color(window, GColorPictonBlue);
+  #else
+    window_set_background_color(window, GColorWhite);
+  #endif
+   
   
 }
 
@@ -269,16 +316,30 @@ static void choices_window_load(Window *window) {
     .title = "50m",
     .callback = menu_select_callback,
   };
+  s_first_menu_items[num_a_items++] = (SimpleMenuItem) {
+    .title = "other ...",
+    .callback = menu_select_callback,
+  };
 
   s_menu_sections[0] = (SimpleMenuSection) {
     .num_items = NUM_FIRST_MENU_ITEMS,
     .items = s_first_menu_items,
+    .title = "Poolsize",
   };
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_frame(window_layer);
-  s_simple_menu_layer = simple_menu_layer_create(bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
+  s_simple_menu_layer = simple_menu_layer_create(
+    bounds, window, s_menu_sections, NUM_MENU_SECTIONS, NULL);
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_simple_menu_layer));
+  
+  #ifdef PBL_COLOR
+    menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
+      s_simple_menu_layer), GColorPictonBlue, GColorWhite);
+  #else
+    menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
+      s_simple_menu_layer), GColorBlack, GColorWhite);
+  #endif
    
 }
 
@@ -341,22 +402,68 @@ static void history_window_load(Window *window) {
 
   s_history_menu_layer = simple_menu_layer_create(bounds, window, s_history_menu_sections, NUM_HISTORY_MENU_SECTIONS, NULL);
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_history_menu_layer));
+  
+   #ifdef PBL_COLOR
+    menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
+      s_history_menu_layer), GColorPictonBlue, GColorWhite);
+  #else
+    menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
+      s_history_menu_layer), GColorBlack, GColorWhite);
+  #endif
 }
 
 static void history_window_unload(Window *window) {
   
 }
+
+static void customsize_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
+  text_layer_custommsize = text_layer_create(GRect(0, 20, bounds.size.w - 30, bounds.size.h));  
+  text_layer_set_text_alignment(text_layer_custommsize, GTextAlignmentCenter);
+  text_layer_set_font(text_layer_custommsize, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+  
+  static char s_body_text[26];
+  if (customPoolSize <= 0) {
+      customPoolSize = 25;
+  }
+  snprintf(s_body_text, sizeof(s_body_text), "%d m", customPoolSize);  
+  text_layer_set_text(text_layer_custommsize, s_body_text);
+  layer_add_child(window_layer, text_layer_get_layer(text_layer_custommsize));
+  
+  // Initialize the action bar:
+  action_bar_customsize = action_bar_layer_create();
+  // Associate the action bar with the window:
+  action_bar_layer_add_to_window(action_bar_customsize, window);
+  // Set the click config provider:
+  action_bar_layer_set_click_config_provider(action_bar_customsize,
+                                             click_config_provider_customsize);
+  // action bar images
+  s_bitmap_action_customsize_up = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_UP);
+  action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_UP, s_bitmap_action_customsize_up, true);
+  s_bitmap_action_customsize_down = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DOWN);
+  action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_DOWN, s_bitmap_action_customsize_down, true);
+  s_bitmap_action_workout = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WORKOUT);
+  action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_SELECT, s_bitmap_action_workout, true);
+}
+
+static void customsize_window_unload(Window *window) {
+  
+}
+
 /********************************
  *********** WINDOWS END ********
  ********************************/
 
 static void init(void) {
   numberOfWorkouts = persist_read_int(88888);
+  customPoolSize = persist_read_int(99999);
   window = window_create();
   s_choices_window = window_create();
   s_workout_window = window_create();
   s_save_window = window_create(); 
   s_history_window = window_create();
+  s_customsize_window = window_create();
   
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -378,6 +485,10 @@ static void init(void) {
     .load = history_window_load,
     .unload = history_window_unload,
   });
+  window_set_window_handlers(s_customsize_window, (WindowHandlers) {
+    .load = customsize_window_load,
+    .unload = customsize_window_unload,
+  });
   const bool animated = true;
   window_stack_push(window, animated);
 }
@@ -388,11 +499,14 @@ static void deinit(void) {
   window_destroy(s_workout_window);
   window_destroy(s_save_window);
   window_destroy(s_history_window);
+  window_destroy(s_customsize_window);
   
   gbitmap_destroy(s_bitmap_main_logo);
   gbitmap_destroy(s_bitmap_action_workout);
   gbitmap_destroy(s_bitmap_action_savenexit);
   gbitmap_destroy(s_bitmap_action_exit);
+  gbitmap_destroy(s_bitmap_action_customsize_up);
+  gbitmap_destroy(s_bitmap_action_customsize_down);
   bitmap_layer_destroy(s_bitmap_main_logo_layer);
 }
 
