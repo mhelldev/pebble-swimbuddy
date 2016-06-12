@@ -335,7 +335,7 @@ static void choices_window_load(Window *window) {
   
   #ifdef PBL_COLOR
     menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
-      s_simple_menu_layer), GColorPictonBlue, GColorWhite);
+      s_simple_menu_layer), GColorPictonBlue, GColorBlack);
   #else
     menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
       s_simple_menu_layer), GColorBlack, GColorWhite);
@@ -405,7 +405,7 @@ static void history_window_load(Window *window) {
   
    #ifdef PBL_COLOR
     menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
-      s_history_menu_layer), GColorPictonBlue, GColorWhite);
+      s_history_menu_layer), GColorPictonBlue, GColorBlack);
   #else
     menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
       s_history_menu_layer), GColorBlack, GColorWhite);
