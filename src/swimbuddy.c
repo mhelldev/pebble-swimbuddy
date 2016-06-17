@@ -226,12 +226,21 @@ static void window_load(Window *window) {
                                              click_config_provider);
   // logo
   s_bitmap_main_logo = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_LOGO);
-  s_bitmap_main_logo_layer = bitmap_layer_create(GRect(6, 20, 100, 140));
+  
+  int logoXPos = 6;
+  #ifdef PBL_ROUND 
+     logoXPos = 30;
+  #endif
+  s_bitmap_main_logo_layer = bitmap_layer_create(GRect(logoXPos, 20, 100, 140));
   bitmap_layer_set_compositing_mode(s_bitmap_main_logo_layer, GCompOpSet);
   bitmap_layer_set_bitmap(s_bitmap_main_logo_layer, s_bitmap_main_logo);
   layer_add_child(window_get_root_layer(window),bitmap_layer_get_layer(s_bitmap_main_logo_layer));
   
-  text_layer_title = text_layer_create(GRect(0, bounds.size.h - 40, bounds.size.w - 30, 40));  
+  int titleMarginLeft = 40;
+  #ifdef PBL_ROUND 
+     titleMarginLeft = 0;
+  #endif
+  text_layer_title = text_layer_create(GRect(0, bounds.size.h - 40, bounds.size.w - titleMarginLeft, 40));  
   text_layer_set_text(text_layer_title, "Swim Buddy");
   text_layer_set_text_alignment(text_layer_title, GTextAlignmentCenter);
   text_layer_set_font(text_layer_title, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
@@ -279,7 +288,11 @@ static void workout_window_load(Window *window) {
   text_layer_distance = text_layer_create(GRect(0, 30, bounds.size.w, 30));  
   text_layer_set_text(text_layer_distance, " 0 m");
   text_layer_set_font(text_layer_distance, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-  text_layer_set_text_alignment(text_layer_distance, GTextAlignmentLeft);
+  #ifdef PBL_ROUND
+    text_layer_set_text_alignment(text_layer_distance, GTextAlignmentCenter);
+  #else
+     text_layer_set_text_alignment(text_layer_distance, GTextAlignmentLeft);
+  #endif
   text_layer_set_background_color(text_layer_distance, GColorBlack);
   text_layer_set_text_color(text_layer_distance, GColorWhite);
   layer_add_child(window_layer, text_layer_get_layer(text_layer_distance));
@@ -287,7 +300,11 @@ static void workout_window_load(Window *window) {
   text_layer_speed = text_layer_create(GRect(0, bounds.size.h - 60, bounds.size.w, 30));  
   text_layer_set_text(text_layer_speed, " 0 kmh");
   text_layer_set_font(text_layer_speed, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-  text_layer_set_text_alignment(text_layer_speed, GTextAlignmentLeft);
+  #ifdef PBL_ROUND
+    text_layer_set_text_alignment(text_layer_speed, GTextAlignmentCenter);
+  #else
+     text_layer_set_text_alignment(text_layer_speed, GTextAlignmentLeft);
+  #endif
   text_layer_set_background_color(text_layer_speed, GColorBlack);
   text_layer_set_text_color(text_layer_speed, GColorWhite);
   layer_add_child(window_layer, text_layer_get_layer(text_layer_speed));
@@ -295,7 +312,11 @@ static void workout_window_load(Window *window) {
   text_layer_pace = text_layer_create(GRect(0, bounds.size.h - 30, bounds.size.w, 30));  
   text_layer_set_text(text_layer_pace, " 0 sec/100m");
   text_layer_set_font(text_layer_pace, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-  text_layer_set_text_alignment(text_layer_pace, GTextAlignmentLeft);
+  #ifdef PBL_ROUND
+    text_layer_set_text_alignment(text_layer_pace, GTextAlignmentCenter);
+  #else
+     text_layer_set_text_alignment(text_layer_pace, GTextAlignmentLeft);
+  #endif
   layer_add_child(window_layer, text_layer_get_layer(text_layer_pace));
   
   window_set_click_config_provider(s_workout_window, click_config_provider_workout);
@@ -317,10 +338,10 @@ static void choices_window_load(Window *window) {
     .callback = menu_select_callback,
   };
   s_first_menu_items[num_a_items++] = (SimpleMenuItem) {
-    .title = "other ...",
+    .title = "other...",
     .callback = menu_select_callback,
   };
-
+  
   s_menu_sections[0] = (SimpleMenuSection) {
     .num_items = NUM_FIRST_MENU_ITEMS,
     .items = s_first_menu_items,
@@ -403,7 +424,7 @@ static void history_window_load(Window *window) {
   s_history_menu_layer = simple_menu_layer_create(bounds, window, s_history_menu_sections, NUM_HISTORY_MENU_SECTIONS, NULL);
   layer_add_child(window_layer, simple_menu_layer_get_layer(s_history_menu_layer));
   
-   #ifdef PBL_COLOR
+  #ifdef PBL_COLOR
     menu_layer_set_highlight_colors(simple_menu_layer_get_menu_layer(
       s_history_menu_layer), GColorPictonBlue, GColorBlack);
   #else
