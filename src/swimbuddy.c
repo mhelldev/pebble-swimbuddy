@@ -235,7 +235,7 @@ static void window_load(Window *window) {
   bitmap_layer_set_bitmap(s_bitmap_main_logo_layer, s_bitmap_main_logo);
   layer_add_child(window_get_root_layer(window),bitmap_layer_get_layer(s_bitmap_main_logo_layer));
   
-  int titleMarginLeft = 40;
+  int titleMarginLeft = 30;
   #ifdef PBL_ROUND 
      titleMarginLeft = 0;
   #endif
