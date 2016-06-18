@@ -11,7 +11,6 @@ ActionBarLayer *action_bar;
 ActionBarLayer *action_bar_save;
 ActionBarLayer *action_bar_customsize;
 
-static TextLayer *text_layer;
 static TextLayer *text_layer_title;
 static TextLayer *text_layer_lapCounter;
 static TextLayer *text_layer_timeCounter;
@@ -25,11 +24,11 @@ static GBitmap *s_bitmap_main_logo;
 static BitmapLayer *s_bitmap_main_logo_layer;
 static GBitmap *s_bitmap_action_workout;
 static GBitmap *s_bitmap_action_history;
-static GBitmap *s_bitmap_action_information;
 static GBitmap *s_bitmap_action_savenexit;
 static GBitmap *s_bitmap_action_exit;
 static GBitmap *s_bitmap_action_customsize_up;
 static GBitmap *s_bitmap_action_customsize_down;
+static GBitmap *s_bitmap_action_customsize_select;
 
 static int poolSize = 25;
 static int lapCount = 0;
@@ -251,7 +250,6 @@ static void window_load(Window *window) {
   action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_SELECT, s_bitmap_action_workout, true);
   s_bitmap_action_history = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_HISTORY);
   action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_UP, s_bitmap_action_history, true);
-  s_bitmap_action_information = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_INFORMATION);
   
   #ifdef PBL_COLOR
     window_set_background_color(window, GColorPictonBlue);
@@ -263,7 +261,12 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-  text_layer_destroy(text_layer);
+  action_bar_layer_destroy(action_bar);
+  gbitmap_destroy(s_bitmap_main_logo);
+  bitmap_layer_destroy(s_bitmap_main_logo_layer);
+  text_layer_destroy(text_layer_title);
+  gbitmap_destroy(s_bitmap_action_workout);
+  gbitmap_destroy(s_bitmap_action_history);
 }
 
 static void workout_window_load(Window *window) {
@@ -325,6 +328,11 @@ static void workout_window_load(Window *window) {
 
 static void workout_window_unload(Window *window) {
   worker_deinit();
+  text_layer_destroy(text_layer_lapCounter);
+  text_layer_destroy(text_layer_timeCounter);
+  text_layer_destroy(text_layer_distance);
+  text_layer_destroy(text_layer_speed);
+  text_layer_destroy(text_layer_pace);
 }
 
 static void choices_window_load(Window *window) {
@@ -365,7 +373,7 @@ static void choices_window_load(Window *window) {
 }
 
 static void choices_window_unload(Window *window) {
-  
+  simple_menu_layer_destroy(s_simple_menu_layer);
 }
 
 static void save_window_load(Window *window) {
@@ -391,7 +399,10 @@ static void save_window_load(Window *window) {
 }
 
 static void save_window_unload(Window *window) {
-  
+  text_layer_destroy(text_layer_save);
+  action_bar_layer_destroy(action_bar_save);
+  gbitmap_destroy(s_bitmap_action_savenexit);
+  gbitmap_destroy(s_bitmap_action_exit);
 }
 
 static void history_window_load(Window *window) {
@@ -434,7 +445,7 @@ static void history_window_load(Window *window) {
 }
 
 static void history_window_unload(Window *window) {
-  
+  simple_menu_layer_destroy(s_history_menu_layer);
 }
 
 static void customsize_window_load(Window *window) {
@@ -464,12 +475,16 @@ static void customsize_window_load(Window *window) {
   action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_UP, s_bitmap_action_customsize_up, true);
   s_bitmap_action_customsize_down = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_DOWN);
   action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_DOWN, s_bitmap_action_customsize_down, true);
-  s_bitmap_action_workout = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WORKOUT);
-  action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_SELECT, s_bitmap_action_workout, true);
+  s_bitmap_action_customsize_select = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WORKOUT);
+  action_bar_layer_set_icon_animated(action_bar_customsize, BUTTON_ID_SELECT, s_bitmap_action_customsize_select, true);
 }
 
 static void customsize_window_unload(Window *window) {
-  
+   text_layer_destroy(text_layer_custommsize);
+   action_bar_layer_destroy(action_bar_customsize);
+   gbitmap_destroy(s_bitmap_action_customsize_up);
+   gbitmap_destroy(s_bitmap_action_customsize_down);
+   gbitmap_destroy(s_bitmap_action_customsize_select);
 }
 
 /********************************
@@ -521,21 +536,10 @@ static void deinit(void) {
   window_destroy(s_save_window);
   window_destroy(s_history_window);
   window_destroy(s_customsize_window);
-  
-  gbitmap_destroy(s_bitmap_main_logo);
-  gbitmap_destroy(s_bitmap_action_workout);
-  gbitmap_destroy(s_bitmap_action_savenexit);
-  gbitmap_destroy(s_bitmap_action_exit);
-  gbitmap_destroy(s_bitmap_action_customsize_up);
-  gbitmap_destroy(s_bitmap_action_customsize_down);
-  bitmap_layer_destroy(s_bitmap_main_logo_layer);
 }
 
 int main(void) {
   init();
-
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-
   app_event_loop();
   deinit();
 }
