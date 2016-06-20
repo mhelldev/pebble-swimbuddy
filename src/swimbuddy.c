@@ -6,6 +6,7 @@ static Window *s_workout_window;
 static Window *s_history_window;
 static Window *s_save_window;
 static Window *s_customsize_window;
+static Window *s_details_window;
 
 ActionBarLayer *action_bar;
 ActionBarLayer *action_bar_save;
@@ -20,6 +21,11 @@ static TextLayer *text_layer_speed;
 static TextLayer *text_layer_save;
 static TextLayer *text_layer_custommsize;
 
+static Layer *s_canvas_layer;
+static GRect canvasBounds;
+static int biggestTime = 0;
+static int smallestTime = 0;
+
 static GBitmap *s_bitmap_main_logo;
 static BitmapLayer *s_bitmap_main_logo_layer;
 static GBitmap *s_bitmap_action_workout;
@@ -32,6 +38,7 @@ static GBitmap *s_bitmap_action_customsize_select;
 
 static int poolSize = 25;
 static int lapCount = 0;
+static int laptime[1000];
 static int timeCount = 0;
 static int numberOfWorkouts = 0;
 static int customPoolSize = 0;
@@ -40,6 +47,8 @@ static char workout_date[100][16];
 static int workout_distance[100];
 static int workout_time[100];
 static char menu_history_subtext[100][25];
+
+ 
 
 /********************************
  *********** MENU ***************
@@ -73,6 +82,13 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 
 static void any_click_handler_workout(ClickRecognizerRef recognizer, void *context) {
    vibes_short_pulse();
+   if (lapCount == 0) {
+       laptime[0]=timeCount;
+   } else {
+       laptime[lapCount]=timeCount - laptime[lapCount];
+   }
+   laptime[lapCount+1] = timeCount;
+   APP_LOG(APP_LOG_LEVEL_DEBUG, "time of lap: %d", laptime[lapCount]);
    static char s_body_text[18];
    snprintf(s_body_text, sizeof(s_body_text), "%d", ++lapCount);
    text_layer_set_text(text_layer_lapCounter, s_body_text);
@@ -108,6 +124,8 @@ static void up_click_handler_save(ClickRecognizerRef recognizer, void *context) 
   window_stack_pop(s_save_window);
   window_stack_pop(s_workout_window);
   window_stack_pop(s_choices_window);
+  
+  window_stack_push(s_details_window, true);
 }
 static void down_click_handler_save(ClickRecognizerRef recognizer, void *context) {
     window_stack_pop(s_save_window);
@@ -189,7 +207,7 @@ static void click_config_provider_customsize(void *context) {
  ********************************/
 static void tick_handler(struct tm *tick_timer, TimeUnits units_changed) {
    static char s_body_text[26];
-  ++timeCount;
+   ++timeCount;
    snprintf(s_body_text, sizeof(s_body_text), " %.2d:%.2d:%.2d",
             timeCount/3600, timeCount/60, timeCount%60);
    text_layer_set_text(text_layer_timeCounter, s_body_text);
@@ -487,6 +505,62 @@ static void customsize_window_unload(Window *window) {
    gbitmap_destroy(s_bitmap_action_customsize_select);
 }
 
+static void canvas_update_proc(Layer *layer, GContext *ctx) {
+  if (lapCount == 0) {
+    return;
+  }
+  // Set the line color
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  // Set the fill color
+  graphics_context_set_fill_color(ctx, GColorPictonBlue);
+  
+  // Set the stroke width (must be an odd integer value)
+  int offsetY = 20;
+  int offsetX = 20;
+  int strokeWidth = (canvasBounds.size.h - (offsetY * 2)) / lapCount;
+  int singleUnit = (canvasBounds.size.w - (offsetX * 2)) / biggestTime;
+  graphics_context_set_stroke_width(ctx, 1);
+  int corner_radius = 0;
+  GRect rect;
+  
+  // Draw time bars
+  for (int i = 0; i < lapCount; i++) {
+    rect = GRect(offsetX, strokeWidth * i + offsetY, laptime[i]*singleUnit, strokeWidth);
+    // Fill a rectangle with rounded corners
+    graphics_fill_rect(ctx, rect, corner_radius, GCornersAll);
+  }
+  // Draw coordinate system
+  GRect coordRect = GRect(offsetX, offsetY, canvasBounds.size.w - (offsetX * 2), canvasBounds.size.h - (offsetY * 2));
+  graphics_draw_rect(ctx, coordRect);
+}
+static void details_window_load(Window *window) {
+  biggestTime = 0;
+  smallestTime = 99999;
+  for (int i = 0; i < lapCount; i++) {
+    if (laptime[i] > biggestTime) {
+      biggestTime = laptime[i];
+    }
+    if (laptime[i] < smallestTime) {
+      smallestTime = laptime[i];
+    }
+  }
+  
+  Layer *window_layer = window_get_root_layer(window);
+  canvasBounds = layer_get_bounds(window_layer);
+  // Create canvas layer
+  s_canvas_layer = layer_create(canvasBounds);
+  // Assign the custom drawing procedure
+  layer_set_update_proc(s_canvas_layer, canvas_update_proc);
+
+  // Add to Window
+  layer_add_child(window_layer, s_canvas_layer);
+}
+
+static void details_window_unload(Window *window) {
+   layer_destroy(s_canvas_layer);
+}
+
+
 /********************************
  *********** WINDOWS END ********
  ********************************/
@@ -500,6 +574,7 @@ static void init(void) {
   s_save_window = window_create(); 
   s_history_window = window_create();
   s_customsize_window = window_create();
+  s_details_window = window_create();
   
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
@@ -525,6 +600,10 @@ static void init(void) {
     .load = customsize_window_load,
     .unload = customsize_window_unload,
   });
+  window_set_window_handlers(s_details_window, (WindowHandlers) {
+    .load = details_window_load,
+    .unload = details_window_unload,
+  });
   const bool animated = true;
   window_stack_push(window, animated);
 }
@@ -536,6 +615,7 @@ static void deinit(void) {
   window_destroy(s_save_window);
   window_destroy(s_history_window);
   window_destroy(s_customsize_window);
+  window_destroy(s_details_window);
 }
 
 int main(void) {
