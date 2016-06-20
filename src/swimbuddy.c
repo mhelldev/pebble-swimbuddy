@@ -515,18 +515,25 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorPictonBlue);
   
   // Set the stroke width (must be an odd integer value)
-  int offsetY = 20;
+  int offsetY = 30;
   int offsetX = 20;
-  int strokeWidth = (canvasBounds.size.h - (offsetY * 2)) / lapCount;
-  int singleUnit = (canvasBounds.size.w - (offsetX * 2)) / biggestTime;
+  int width = (canvasBounds.size.w - (offsetX * 2));
+  int height = (canvasBounds.size.h - (offsetY * 2));
+  int strokeWidth = height / lapCount;
+  int singleUnit = width / biggestTime;
   graphics_context_set_stroke_width(ctx, 1);
   int corner_radius = 0;
   GRect rect;
   
   // Draw time bars
   for (int i = 0; i < lapCount; i++) {
-    rect = GRect(offsetX, strokeWidth * i + offsetY, laptime[i]*singleUnit, strokeWidth);
+    rect = GRect(offsetX, strokeWidth * i + offsetY, width -  (laptime[i]*singleUnit), strokeWidth);
     // Fill a rectangle with rounded corners
+    if (laptime[i] == smallestTime) {
+      graphics_context_set_fill_color(ctx, GColorGreen);  
+    } else {
+       graphics_context_set_fill_color(ctx, GColorPictonBlue); 
+    }
     graphics_fill_rect(ctx, rect, corner_radius, GCornersAll);
   }
   // Draw coordinate system
