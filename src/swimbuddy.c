@@ -424,7 +424,8 @@ static void save_window_unload(Window *window) {
 }
 
 static void history_window_load(Window *window) {
-  for (int i=0; i < numberOfWorkouts && i < NUM_HISTORY_FIRST_MENU_ITEMS; i++) {
+  //for (int i=0; i < numberOfWorkouts && i < NUM_HISTORY_FIRST_MENU_ITEMS; i++) {
+  for (int i=numberOfWorkouts-1; i >= 0 && i >= (numberOfWorkouts - NUM_HISTORY_FIRST_MENU_ITEMS); i--) {
       persist_read_string(3 * i, workout_date[i], 16);
       workout_distance[i] = persist_read_int(3 * i + 1);
       workout_time[i] = persist_read_int(3 * i + 2);
@@ -527,7 +528,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   
   // Draw time bars
   for (int i = 0; i < lapCount; i++) {
-    rect = GRect(offsetX, strokeWidth * i + offsetY, width -  (laptime[i]*singleUnit), strokeWidth);
+    rect = GRect(offsetX, strokeWidth * i + offsetY + 20, width -  (laptime[i]*singleUnit), strokeWidth);
     // Fill a rectangle with rounded corners
     if (laptime[i] == smallestTime) {
       graphics_context_set_fill_color(ctx, GColorGreen);  
@@ -536,9 +537,41 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     }
     graphics_fill_rect(ctx, rect, corner_radius, GCornersAll);
   }
+  
   // Draw coordinate system
-  GRect coordRect = GRect(offsetX, offsetY, canvasBounds.size.w - (offsetX * 2), canvasBounds.size.h - (offsetY * 2));
+  GRect coordRect = GRect(offsetX, offsetY + 20, canvasBounds.size.w - (offsetX * 2), canvasBounds.size.h - (offsetY * 2));
   graphics_draw_rect(ctx, coordRect);
+  
+  // Draw text
+  GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  graphics_context_set_text_color(ctx, GColorBlack);
+  static char s_body_text[26];
+  //GRect layer_bounds = layer_get_bounds(layer);
+  bool foundBiggest = false;
+  bool foundSmallest = false;
+  for (int i = 0; i < lapCount; i++) {
+    if ( (laptime[i] == smallestTime && foundSmallest == false)
+        || (laptime[i] == biggestTime && foundBiggest == false)) {
+     
+      if (laptime[i] == smallestTime) {
+        snprintf(s_body_text, sizeof(s_body_text), "%d s", smallestTime);
+        foundSmallest = true;
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Found smallest! %d", i);
+      } else {
+        snprintf(s_body_text, sizeof(s_body_text), "%d s", biggestTime);
+        foundBiggest = true;
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Found biggest! %d", i);
+      }
+      GRect bounds = GRect(offsetX, strokeWidth * i + offsetY + 20,
+                      100, 20);
+      
+      GSize text_size = graphics_text_layout_get_content_size(s_body_text, font, bounds,
+                              GTextOverflowModeWordWrap, GTextAlignmentCenter);
+      graphics_draw_text(ctx, s_body_text, font, bounds, GTextOverflowModeWordWrap, 
+                                            GTextAlignmentCenter, NULL);
+    }
+  }
+  
 }
 static void details_window_load(Window *window) {
   biggestTime = 0;
@@ -551,6 +584,8 @@ static void details_window_load(Window *window) {
       smallestTime = laptime[i];
     }
   }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Biggest: %d", biggestTime);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Smallest: %d", smallestTime);
   
   Layer *window_layer = window_get_root_layer(window);
   canvasBounds = layer_get_bounds(window_layer);
