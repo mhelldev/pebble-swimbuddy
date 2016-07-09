@@ -13,6 +13,7 @@ ActionBarLayer *action_bar_save;
 ActionBarLayer *action_bar_customsize;
 
 static TextLayer *text_layer_title;
+static TextLayer *text_layer_version;
 static TextLayer *text_layer_lapCounter;
 static TextLayer *text_layer_timeCounter;
 static TextLayer *text_layer_distance;
@@ -263,6 +264,17 @@ static void window_load(Window *window) {
   text_layer_set_font(text_layer_title, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   layer_add_child(window_layer, text_layer_get_layer(text_layer_title));
   
+  text_layer_version = text_layer_create(GRect(0, 0, bounds.size.w - titleMarginLeft - 5, 20));  
+  text_layer_set_text(text_layer_version, "v 1.3");
+  #ifdef PBL_COLOR
+     text_layer_set_background_color(text_layer_version, GColorPictonBlue);
+  #else
+    text_layer_set_background_color(text_layer_version, GColorWhite);
+  #endif
+  text_layer_set_text_alignment(text_layer_version, GTextAlignmentRight);
+  text_layer_set_font(text_layer_version, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  layer_add_child(window_layer, text_layer_get_layer(text_layer_version));
+  
   // action bar images
   s_bitmap_action_workout = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WORKOUT);
   action_bar_layer_set_icon_animated(action_bar, BUTTON_ID_SELECT, s_bitmap_action_workout, true);
@@ -283,6 +295,7 @@ static void window_unload(Window *window) {
   gbitmap_destroy(s_bitmap_main_logo);
   bitmap_layer_destroy(s_bitmap_main_logo_layer);
   text_layer_destroy(text_layer_title);
+  text_layer_destroy(text_layer_version);
   gbitmap_destroy(s_bitmap_action_workout);
   gbitmap_destroy(s_bitmap_action_history);
 }
@@ -556,17 +569,15 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
       if (laptime[i] == smallestTime) {
         snprintf(s_body_text, sizeof(s_body_text), "%d s", smallestTime);
         foundSmallest = true;
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Found smallest! %d", i);
       } else {
         snprintf(s_body_text, sizeof(s_body_text), "%d s", biggestTime);
         foundBiggest = true;
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Found biggest! %d", i);
       }
       GRect bounds = GRect(offsetX, strokeWidth * i + offsetY + 20,
                       100, 20);
       
-      GSize text_size = graphics_text_layout_get_content_size(s_body_text, font, bounds,
-                              GTextOverflowModeWordWrap, GTextAlignmentCenter);
+      //GSize text_size = graphics_text_layout_get_content_size(s_body_text, font, bounds,
+      //                       GTextOverflowModeWordWrap, GTextAlignmentCenter);
       graphics_draw_text(ctx, s_body_text, font, bounds, GTextOverflowModeWordWrap, 
                                             GTextAlignmentCenter, NULL);
     }
@@ -584,8 +595,6 @@ static void details_window_load(Window *window) {
       smallestTime = laptime[i];
     }
   }
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Biggest: %d", biggestTime);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Smallest: %d", smallestTime);
   
   Layer *window_layer = window_get_root_layer(window);
   canvasBounds = layer_get_bounds(window_layer);
